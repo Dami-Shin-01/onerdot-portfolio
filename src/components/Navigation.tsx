@@ -72,7 +72,7 @@ export default function Navigation() {
           }}
           className="font-serif-en text-xl tracking-[-0.02em] text-[var(--color-headline)]"
         >
-          onerdot
+          On a DoT
         </a>
 
         {/* Desktop Nav */}

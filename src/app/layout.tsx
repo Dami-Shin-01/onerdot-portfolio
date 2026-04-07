@@ -25,12 +25,12 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "온어닷 | 신다미 — AI를 사람의 언어로 가르치는 강사",
+  title: "On a DoT | 신다미 — AI를 사람의 언어로 가르치는 강사",
   description:
     "비전공자도 이해하는 눈높이 설명, 현장에서 바로 쓰는 AI 강의. 생성형 AI, AI 리터러시, AI 업무 자동화 전문 강사 신다미입니다.",
-  keywords: ["AI 기초 강의", "직장인 AI 교육", "챗GPT 활용법", "AI 강사", "신다미", "온어닷"],
+  keywords: ["AI 기초 강의", "직장인 AI 교육", "챗GPT 활용법", "AI 강사", "신다미", "On a DoT"],
   openGraph: {
-    title: "온어닷 | 신다미 — AI를 사람의 언어로 가르치는 강사",
+    title: "On a DoT | 신다미 — AI를 사람의 언어로 가르치는 강사",
     description: "비전공자도 이해하는 눈높이 설명, 현장에서 바로 쓰는 AI 강의",
     type: "website",
     locale: "ko_KR",

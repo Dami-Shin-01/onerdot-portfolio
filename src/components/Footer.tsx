@@ -6,17 +6,17 @@ export default function Footer() {
           {/* Logo & Copyright */}
           <div>
             <span className="font-serif-en text-lg tracking-[-0.02em] text-[var(--color-headline)]">
-              onerdot
+              On a DoT
             </span>
             <p className="mt-2 text-sm text-[var(--color-warm-gray)]">
-              &copy; {new Date().getFullYear()} 온어닷. All rights reserved.
+              &copy; {new Date().getFullYear()} On a DoT. All rights reserved.
             </p>
           </div>
 
           {/* Links */}
           <div className="flex items-center gap-6">
             <a
-              href="mailto:hello@onerdot.com"
+              href="mailto:de.onadot@gmail.com"
               className="text-sm text-[var(--color-warm-gray)] transition-colors duration-200 hover:text-[var(--color-charcoal)]"
             >
               Email

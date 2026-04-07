@@ -291,7 +291,7 @@ export default function Contact() {
               {formStatus === "error" && (
                 <p className="mt-4 text-sm text-[var(--color-terracotta)]">
                   전송에 실패했습니다.{" "}
-                  <a href="mailto:hello@onerdot.com" className="underline">
+                  <a href="mailto:de.onadot@gmail.com" className="underline">
                     이메일로 직접 문의해주세요.
                   </a>
                 </p>

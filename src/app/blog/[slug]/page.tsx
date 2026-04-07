@@ -41,9 +41,9 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = posts[slug];
-  if (!post) return { title: "글을 찾을 수 없습니다 | 온어닷" };
+  if (!post) return { title: "글을 찾을 수 없습니다 | On a DoT" };
   return {
-    title: `${post.title} | 온어닷`,
+    title: `${post.title} | On a DoT`,
     description: post.content.slice(0, 160),
   };
 }
