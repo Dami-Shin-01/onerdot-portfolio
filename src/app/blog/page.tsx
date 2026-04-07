@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "블로그 | On a DoT",
+  title: "블로그 | 온어닷",
   description: "AI에 대한 쉬운 이야기들을 나눕니다.",
 };
 

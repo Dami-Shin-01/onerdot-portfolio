@@ -9,7 +9,7 @@ export default function Footer() {
               On a DoT
             </span>
             <p className="mt-2 text-sm text-[var(--color-warm-gray)]">
-              &copy; {new Date().getFullYear()} On a DoT. All rights reserved.
+              &copy; {new Date().getFullYear()} 온어닷. All rights reserved.
             </p>
           </div>
 
