@@ -78,13 +78,13 @@ export default function Hero() {
           </p>
           <h1
             ref={nameRef}
-            className="font-serif-kr text-[2.5rem] leading-[1.1] tracking-[-0.02em] text-[var(--color-headline)] md:text-[3.5rem] lg:text-[4.5rem]"
+            className="font-serif-kr text-[2rem] leading-[1.3] tracking-[-0.02em] text-[var(--color-headline)] md:text-[2.5rem] lg:text-[3.2rem]"
           >
-            AI, 어렵지 않습니다.
+            <span className="font-bold">AI, 어렵지 않습니다.</span>
             <br />
-            <span className="text-[var(--color-warm-gray)]">처음 배우는 분들과</span>
-            <br />
-            함께 해왔습니다.
+            <span className="font-normal text-[var(--color-warm-gray)]">
+              처음 배우는 분들과 함께 해왔습니다.
+            </span>
           </h1>
           <p
             ref={sloganRef}
