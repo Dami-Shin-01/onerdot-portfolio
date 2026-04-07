@@ -1,0 +1,36 @@
+{
+  "_설명": "이 파일은 강의 이력 섹션에 표시되는 데이터입니다. GitHub 웹 에디터에서 직접 수정 가능합니다.",
+  "_수정방법": "아래 형식을 유지하면서 내용만 바꿔주세요. 수정 후 Commit changes 버튼을 누르면 자동 반영됩니다.",
+
+  "stats": {
+    "totalLectures": 150,
+    "organizations": 40,
+    "totalParticipants": 3000
+  },
+
+  "timeline": [
+    {
+      "year": "2026",
+      "items": [
+        { "org": "OO기업", "topic": "AI 업무자동화 워크숍" },
+        { "org": "XX공공기관", "topic": "AI 리터러시 교육" }
+      ]
+    },
+    {
+      "year": "2025",
+      "items": [
+        { "org": "OO대학교", "topic": "생성형 AI 활용 특강" },
+        { "org": "XX기업", "topic": "소상공인 콘텐츠 자동화" },
+        { "org": "OO센터", "topic": "직장인 AI 교육" }
+      ]
+    },
+    {
+      "year": "2024",
+      "items": [
+        { "org": "XX기관", "topic": "AI 기초 교육" },
+        { "org": "OO기업", "topic": "ChatGPT 업무 활용" },
+        { "org": "XX대학교", "topic": "AI 리터러시 강의" }
+      ]
+    }
+  ]
+}

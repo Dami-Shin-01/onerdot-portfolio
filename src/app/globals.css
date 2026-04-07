@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-cream: #FAF8F4;
+  --color-charcoal: #2C2C2C;
+  --color-headline: #1A1A1A;
+  --color-warm-gray: #807872;
+  --color-terracotta: #C17A5A;
+  --color-terracotta-hover: #A86448;
+  --color-dark-bg: #1E1612;
+  --color-soft-gold: #C4956A;
+
+  --font-serif-kr: var(--font-noto-serif-kr);
+  --font-sans: var(--font-pretendard);
+  --font-serif-en: var(--font-cormorant);
+}
+
+/* Base styles */
+html {
+  scroll-behavior: auto; /* Lenis handles smooth scroll */
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+  font-family: var(--font-sans), "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Custom text selection */
+::selection {
+  background: var(--color-terracotta);
+  color: var(--color-cream);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-terracotta);
+  border-radius: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Typography helpers */
+.font-serif-kr {
+  font-family: var(--font-serif-kr), "Noto Serif KR", serif;
+}
+
+.font-serif-en {
+  font-family: var(--font-serif-en), "Cormorant Garamond", serif;
+}
+
+/* Section number styling */
+.section-number {
+  font-family: var(--font-serif-en), "Cormorant Garamond", serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--color-warm-gray);
+  font-weight: 400;
+}
