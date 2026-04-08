@@ -76,7 +76,7 @@ export default function Contact() {
             </div>
 
             {/* Contact Info */}
-            <div className="contact-reveal mt-16 grid grid-cols-1 gap-8 border-t border-[var(--color-warm-gray)]/15 pt-10 sm:grid-cols-3">
+            <div className="contact-reveal mt-16 grid grid-cols-1 gap-8 border-t border-[var(--color-warm-gray)]/15 pt-10 sm:grid-cols-2">
               <div>
                 <p className="text-xs tracking-[0.06em] uppercase text-[var(--color-warm-gray)]">
                   Email
@@ -86,17 +86,6 @@ export default function Contact() {
                   className="mt-2 block text-base text-[var(--color-cream)] transition-opacity duration-200 hover:opacity-70"
                 >
                   de.onadot@gmail.com
-                </a>
-              </div>
-              <div>
-                <p className="text-xs tracking-[0.06em] uppercase text-[var(--color-warm-gray)]">
-                  Phone
-                </p>
-                <a
-                  href="tel:010-3803-3719"
-                  className="mt-2 block text-base text-[var(--color-cream)] transition-opacity duration-200 hover:opacity-70"
-                >
-                  010-3803-3719
                 </a>
               </div>
               <div>
