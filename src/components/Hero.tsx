@@ -112,14 +112,12 @@ export default function Hero() {
 
         {/* Profile Image - Right (off-grid) */}
         <div ref={imageRef} className="relative lg:col-span-5 lg:-mr-10 xl:-mr-20">
-          <div className="relative aspect-[3/4] w-full max-w-[480px] overflow-hidden bg-[var(--color-warm-gray)]/20 mix-blend-multiply lg:ml-auto">
-            {/* Placeholder for profile image */}
-            <div className="absolute inset-0 flex items-center justify-center bg-[var(--color-warm-gray)]/10">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-24 w-24 rounded-full bg-[var(--color-warm-gray)]/20" />
-                <p className="text-sm text-[var(--color-warm-gray)]">프로필 사진</p>
-              </div>
-            </div>
+          <div className="relative aspect-[3/4] w-full max-w-[480px] overflow-hidden rounded-[2px] lg:ml-auto">
+            <img
+              src="/images/profile.png"
+              alt="신다미 강사 프로필"
+              className="h-full w-full object-cover object-top"
+            />
             {/* Decorative watermark */}
             <span
               className="pointer-events-none absolute -bottom-5 -left-6 select-none font-serif-en text-[6rem] italic leading-none text-[rgba(193,122,90,0.12)]"
