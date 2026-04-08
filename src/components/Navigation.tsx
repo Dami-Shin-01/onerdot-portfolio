@@ -65,11 +65,7 @@ export default function Navigation() {
       <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4 lg:px-12">
         {/* Logo */}
         <a
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
+          href="/"
           className="font-serif-en text-xl tracking-[-0.02em] text-[var(--color-headline)]"
         >
           On a DoT
