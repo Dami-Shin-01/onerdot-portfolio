@@ -21,6 +21,18 @@ export default function Footer() {
             >
               Email
             </a>
+            <a
+              href="/materials"
+              className="text-sm text-[var(--color-warm-gray)] transition-colors duration-200 hover:text-[var(--color-charcoal)]"
+            >
+              강의자료실
+            </a>
+            <a
+              href="/admin"
+              className="text-sm text-[var(--color-warm-gray)]/50 transition-colors duration-200 hover:text-[var(--color-charcoal)]"
+            >
+              관리자
+            </a>
           </div>
         </div>
       </div>
