@@ -21,18 +21,6 @@ export default function Footer() {
             >
               Email
             </a>
-            <a
-              href="#"
-              className="text-sm text-[var(--color-warm-gray)] transition-colors duration-200 hover:text-[var(--color-charcoal)]"
-            >
-              Instagram
-            </a>
-            <a
-              href="#"
-              className="text-sm text-[var(--color-warm-gray)] transition-colors duration-200 hover:text-[var(--color-charcoal)]"
-            >
-              LinkedIn
-            </a>
           </div>
         </div>
       </div>
