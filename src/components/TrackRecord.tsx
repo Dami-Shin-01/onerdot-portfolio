@@ -7,9 +7,23 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const timeline = [
-  { year: "2026", items: [{ org: "OO기업", topic: "AI 업무자동화 워크숍" }, { org: "XX공공기관", topic: "AI 리터러시 교육" }] },
-  { year: "2025", items: [{ org: "OO대학교", topic: "생성형 AI 활용 특강" }, { org: "XX기업", topic: "소상공인 콘텐츠 자동화" }, { org: "OO센터", topic: "직장인 AI 교육" }] },
-  { year: "2024", items: [{ org: "XX기관", topic: "AI 기초 교육" }, { org: "OO기업", topic: "ChatGPT 업무 활용" }, { org: "XX대학교", topic: "AI 리터러시 강의" }] },
+  {
+    year: "2026",
+    items: [
+      { org: "Google.org · AVPN", topic: "Gemini를 활용 및 심화 — 딥리서치, 에이전틱 시스템 트렌드" },
+      { org: "미라클 평생교육원", topic: "AI 활용의 정석, 반복 업무에서 탈출하는 일잘러 도구" },
+    ],
+  },
+  {
+    year: "2025",
+    items: [
+      { org: "한국장애인고용공단", topic: "교사 대상 AI 활용 중급 과정 — 맞춤형 교육자료 제작 및 AI Assistant 구현" },
+      { org: "횡성군청", topic: "공무원 대상 생성형 AI & ChatGPT 교육" },
+      { org: "동해교육지원청 · AIxSeed", topic: "AI 활용 윤리 및 프롬프트 지시 기법" },
+      { org: "Google.org · AVPN", topic: "Gemini를 활용한 챗봇 제작 및 심화 활용법" },
+      { org: "GPTers", topic: "GPT를 활용한 챗봇 제작 및 활용" },
+    ],
+  },
 ];
 
 export default function TrackRecord() {

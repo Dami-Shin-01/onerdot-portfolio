@@ -74,7 +74,7 @@ export default function Hero() {
         {/* Text Content - Left */}
         <div className="lg:col-span-7">
           <p className="mb-4 text-sm tracking-[0.06em] text-[var(--color-warm-gray)]">
-            AI INSTRUCTOR
+            AI INSTRUCTOR · GOOGLE CERTIFIED TRAINER
           </p>
           <h1
             ref={nameRef}

@@ -60,14 +60,15 @@ export default function About() {
 
             <div className="mt-10 max-w-[760px] space-y-6">
               <p className="about-reveal text-base leading-[1.8] text-[var(--color-charcoal)]">
-                안녕하세요, 신다미입니다. 저는 AI가 어렵게 느껴지는 분들을 위해
-                강의합니다. 기술 용어 대신 일상의 언어로, 이론보다 실습 중심으로,
-                수강생의 눈높이에서 설명합니다.
+                안녕하세요, 디자인온어닷 대표 신다미입니다. 웹디자이너 출신으로
+                AI 기초 교육에 집중하고 있습니다. 기술 용어 대신 일상의 언어로,
+                이론보다 실습 중심으로, 수강생의 눈높이에서 설명합니다.
               </p>
               <p className="about-reveal text-base leading-[1.8] text-[var(--color-charcoal)]">
-                기업, 공공기관, 소상공인 등 다양한 현장에서 강의해왔습니다.
-                &ldquo;어렵다고 생각했는데 할 수 있겠다&rdquo;는 말을 들을 때
-                가장 보람을 느낍니다.
+                Google 공인 트레이너(Level 1, 2, TSA)이자
+                AVPN AI Opportunity Fund Trainer로서,
+                Google.org·AVPN, 공공기관, 기업 등 다양한 현장에서
+                AI 교육을 진행해왔습니다.
               </p>
               <p className="about-reveal text-base leading-[1.8] text-[var(--color-charcoal)]">
                 참여형 강의를 지향합니다. 강의실에서 직접 따라 하고, 질문하고,
@@ -81,23 +82,33 @@ export default function About() {
             <div className="space-y-8 lg:pl-8 lg:border-l lg:border-[var(--color-warm-gray)]/20">
               <div className="about-reveal">
                 <p className="text-xs tracking-[0.06em] text-[var(--color-warm-gray)] uppercase">
-                  전문 분야
+                  자격사항
                 </p>
                 <p className="mt-2 text-base text-[var(--color-charcoal)]">
-                  생성형 AI 활용 / AI 리터러시
+                  Google 공인 트레이너
                   <br />
-                  AI 업무 자동화 / 콘텐츠 자동화
+                  <span className="text-sm text-[var(--color-warm-gray)]">Level 1, Level 2, TSA</span>
+                </p>
+                <p className="mt-2 text-base text-[var(--color-charcoal)]">
+                  AVPN AI Opportunity Fund Trainer
+                  <br />
+                  <span className="text-sm text-[var(--color-warm-gray)]">Google.org · ADB</span>
                 </p>
               </div>
 
               <div className="about-reveal">
                 <p className="text-xs tracking-[0.06em] text-[var(--color-warm-gray)] uppercase">
-                  강의 형태
+                  경력
                 </p>
                 <p className="mt-2 text-base text-[var(--color-charcoal)]">
-                  기업 출강 / 공공기관 출강
+                  디자인온어닷 대표
                   <br />
-                  오프라인 기획 강의
+                  <span className="text-sm text-[var(--color-warm-gray)]">웹디자인 · 2025 ~</span>
+                </p>
+                <p className="mt-2 text-base text-[var(--color-charcoal)]">
+                  (주) 메디톡스 QA팀
+                  <br />
+                  <span className="text-sm text-[var(--color-warm-gray)]">데이터/문서/교육 · 2018 ~ 2023</span>
                 </p>
               </div>
 
