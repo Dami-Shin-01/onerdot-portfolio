@@ -1,8 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PasswordGate from "@/components/PasswordGate";
-import materialsData from "../../../content/materials.json";
+
+interface MaterialItem {
+  title: string;
+  type: string;
+  url: string;
+  date: string;
+}
+
+interface MaterialCourse {
+  id: string;
+  title: string;
+  description: string;
+  materials: MaterialItem[];
+}
+
+interface MaterialsData {
+  password: string;
+  courses: MaterialCourse[];
+}
 
 const typeIcons: Record<string, string> = {
   pptx: "📊",
@@ -21,14 +39,57 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function MaterialsContent() {
-  const [activeCourse, setActiveCourse] = useState(materialsData.courses[0]?.id || "");
+  const [data, setData] = useState<MaterialsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeCourse, setActiveCourse] = useState("");
 
-  const currentCourse = materialsData.courses.find((c) => c.id === activeCourse);
+  useEffect(() => {
+    fetch("/api/blog") // just to check if blob is configured
+      .catch(() => {});
+
+    // Fetch materials from API
+    fetch("/api/admin/materials", {
+      headers: { "x-admin-password": "__public__" },
+    })
+      .then(() => {
+        // Public route needed — let's fetch directly
+      })
+      .catch(() => {});
+
+    // For now, try fetching from a public endpoint
+    fetch("/api/materials")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        if (d) {
+          setData(d);
+          if (d.courses.length > 0) setActiveCourse(d.courses[0].id);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-cream)]">
+        <p className="text-sm text-[var(--color-warm-gray)]">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!data || data.courses.length === 0) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--color-cream)]">
+        <p className="text-sm text-[var(--color-warm-gray)]">등록된 강의자료가 없습니다.</p>
+      </div>
+    );
+  }
+
+  const currentCourse = data.courses.find((c) => c.id === activeCourse);
 
   return (
-    <PasswordGate correctPassword={materialsData.password}>
+    <PasswordGate correctPassword={data.password}>
       <div className="min-h-screen bg-[var(--color-cream)]">
-        {/* Header */}
         <header className="border-b border-[var(--color-warm-gray)]/20">
           <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4 lg:px-12">
             <a href="/" className="font-serif-en text-xl tracking-[-0.02em] text-[var(--color-headline)]">
@@ -39,9 +100,8 @@ export default function MaterialsContent() {
         </header>
 
         <div className="mx-auto max-w-[1200px] px-6 py-12 lg:px-12">
-          {/* Course Tabs */}
           <div className="mb-10 flex flex-wrap gap-3">
-            {materialsData.courses.map((course) => (
+            {data.courses.map((course) => (
               <button
                 key={course.id}
                 onClick={() => setActiveCourse(course.id)}
@@ -56,7 +116,6 @@ export default function MaterialsContent() {
             ))}
           </div>
 
-          {/* Course Info */}
           {currentCourse && (
             <>
               <div className="mb-8">
@@ -68,7 +127,6 @@ export default function MaterialsContent() {
                 </p>
               </div>
 
-              {/* Materials List */}
               <div className="space-y-0">
                 {currentCourse.materials.map((material, index) => {
                   const isExternal = material.url.startsWith("http");
@@ -78,7 +136,6 @@ export default function MaterialsContent() {
                       href={material.url}
                       target={isExternal ? "_blank" : undefined}
                       rel={isExternal ? "noopener noreferrer" : undefined}
-                      download={!isExternal ? true : undefined}
                       className="group flex items-center gap-4 border-b border-[var(--color-warm-gray)]/15 px-4 py-5 transition-colors hover:bg-[var(--color-warm-gray)]/5"
                     >
                       <span className="text-xl" aria-hidden="true">
@@ -88,9 +145,7 @@ export default function MaterialsContent() {
                         <p className="text-base text-[var(--color-charcoal)] group-hover:text-[var(--color-terracotta)]">
                           {material.title}
                         </p>
-                        <p className="mt-0.5 text-xs text-[var(--color-warm-gray)]">
-                          {material.date}
-                        </p>
+                        <p className="mt-0.5 text-xs text-[var(--color-warm-gray)]">{material.date}</p>
                       </div>
                       <span className="rounded-[2px] border border-[var(--color-warm-gray)]/20 px-2.5 py-1 text-xs text-[var(--color-warm-gray)]">
                         {typeLabels[material.type] || material.type.toUpperCase()}
