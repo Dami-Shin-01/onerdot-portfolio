@@ -8,55 +8,71 @@ function checkAuth(req: NextRequest): boolean {
 
 export async function GET(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const posts = await getPosts();
-  return NextResponse.json(posts);
+  try {
+    const posts = await getPosts();
+    return NextResponse.json(posts);
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const posts = await getPosts();
+  try {
+    const body = await req.json();
+    const posts = await getPosts();
 
-  const newPost: BlogPost = {
-    id: body.title
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣\s]/g, "")
-      .replace(/\s+/g, "-")
-      .slice(0, 60) + "-" + Date.now().toString(36),
-    title: body.title,
-    date: new Date().toISOString().split("T")[0],
-    tags: body.tags || [],
-    summary: body.summary || "",
-    content: body.content || "",
-    published: body.published ?? true,
-  };
+    const newPost: BlogPost = {
+      id: body.title
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣\s]/g, "")
+        .replace(/\s+/g, "-")
+        .slice(0, 60) + "-" + Date.now().toString(36),
+      title: body.title,
+      date: new Date().toISOString().split("T")[0],
+      tags: body.tags || [],
+      summary: body.summary || "",
+      content: body.content || "",
+      published: body.published ?? true,
+    };
 
-  posts.unshift(newPost);
-  await savePosts(posts);
-  return NextResponse.json(newPost, { status: 201 });
+    posts.unshift(newPost);
+    await savePosts(posts);
+    return NextResponse.json(newPost, { status: 201 });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function PUT(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await req.json();
-  const posts = await getPosts();
-  const index = posts.findIndex((p) => p.id === body.id);
+  try {
+    const body = await req.json();
+    const posts = await getPosts();
+    const index = posts.findIndex((p) => p.id === body.id);
 
-  if (index === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (index === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  posts[index] = { ...posts[index], ...body };
-  await savePosts(posts);
-  return NextResponse.json(posts[index]);
+    posts[index] = { ...posts[index], ...body };
+    await savePosts(posts);
+    return NextResponse.json(posts[index]);
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { id } = await req.json();
-  let posts = await getPosts();
-  posts = posts.filter((p) => p.id !== id);
-  await savePosts(posts);
-  return NextResponse.json({ success: true });
+  try {
+    const { id } = await req.json();
+    let posts = await getPosts();
+    posts = posts.filter((p) => p.id !== id);
+    await savePosts(posts);
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ error: String(e) }, { status: 500 });
+  }
 }

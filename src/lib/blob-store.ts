@@ -1,4 +1,4 @@
-import { put, list } from "@vercel/blob";
+import { put, list, del } from "@vercel/blob";
 
 export interface BlogPost {
   id: string;
@@ -45,6 +45,11 @@ async function readJson<T>(prefix: string, fallback: T): Promise<T> {
 }
 
 async function writeJson<T>(prefix: string, data: T): Promise<void> {
+  // Delete existing blob first to avoid duplicates
+  const existing = await findBlob(prefix);
+  if (existing) {
+    try { await del(existing); } catch { /* ignore */ }
+  }
   await put(prefix, JSON.stringify(data, null, 2), {
     access: "public",
     addRandomSuffix: false,
