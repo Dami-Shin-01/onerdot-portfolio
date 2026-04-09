@@ -1,17 +1,14 @@
 import Link from "next/link";
-import { getPosts } from "@/lib/blob-store";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
-  let posts: { id: string; title: string; date: string; tags: string[]; summary: string }[] = [];
-
-  try {
-    const allPosts = await getPosts();
-    posts = allPosts.filter((p) => p.published);
-  } catch {
-    // Blob not configured yet — show empty state
-  }
+  const { data: posts } = await supabase
+    .from("posts")
+    .select("id, title, date, tags, summary")
+    .eq("published", true)
+    .order("date", { ascending: false });
 
   return (
     <main className="min-h-screen bg-[var(--color-cream)] pt-24">
@@ -24,7 +21,7 @@ export default async function BlogPage() {
         </p>
 
         <div className="mt-12 space-y-0">
-          {posts.length === 0 ? (
+          {!posts || posts.length === 0 ? (
             <p className="py-16 text-center text-sm text-[var(--color-warm-gray)]">
               아직 작성된 글이 없습니다.
             </p>
@@ -36,7 +33,7 @@ export default async function BlogPage() {
                 className="group block border-b border-[var(--color-warm-gray)]/15 py-8 transition-colors hover:bg-[var(--color-warm-gray)]/5"
               >
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {post.tags.map((tag) => (
+                  {post.tags?.map((tag: string) => (
                     <span key={tag} className="text-xs text-[var(--color-terracotta)]">{tag}</span>
                   ))}
                 </div>

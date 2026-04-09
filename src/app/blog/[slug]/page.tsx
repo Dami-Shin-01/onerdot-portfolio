@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPosts } from "@/lib/blob-store";
+import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -11,29 +11,28 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  try {
-    const posts = await getPosts();
-    const post = posts.find((p) => p.id === slug && p.published);
-    if (!post) return { title: "글을 찾을 수 없습니다 | 온어닷" };
-    return {
-      title: `${post.title} | 온어닷`,
-      description: post.summary || post.content.slice(0, 160),
-    };
-  } catch {
-    return { title: "블로그 | 온어닷" };
-  }
+  const { data: post } = await supabase
+    .from("posts")
+    .select("title, summary, content")
+    .eq("id", slug)
+    .eq("published", true)
+    .single();
+
+  if (!post) return { title: "글을 찾을 수 없습니다 | 온어닷" };
+  return {
+    title: `${post.title} | 온어닷`,
+    description: post.summary || post.content?.slice(0, 160),
+  };
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  let post = null;
-
-  try {
-    const posts = await getPosts();
-    post = posts.find((p) => p.id === slug && p.published);
-  } catch {
-    // Blob not configured
-  }
+  const { data: post } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", slug)
+    .eq("published", true)
+    .single();
 
   if (!post) notFound();
 
@@ -48,7 +47,7 @@ export default async function BlogPostPage({ params }: Props) {
         </Link>
 
         <div className="flex flex-wrap gap-2 mb-3">
-          {post.tags.map((tag) => (
+          {post.tags?.map((tag: string) => (
             <span key={tag} className="text-xs text-[var(--color-terracotta)]">{tag}</span>
           ))}
         </div>
@@ -60,7 +59,7 @@ export default async function BlogPostPage({ params }: Props) {
         <time className="mt-4 block text-sm text-[var(--color-warm-gray)]">{post.date}</time>
 
         <div className="mt-10 space-y-6 text-base leading-[1.9] text-[var(--color-charcoal)]">
-          {post.content.split("\n\n").map((paragraph, i) => (
+          {post.content?.split("\n\n").map((paragraph: string, i: number) => (
             <p key={i}>{paragraph}</p>
           ))}
         </div>

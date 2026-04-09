@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getPosts, savePosts, type BlogPost } from "@/lib/blob-store";
+import { supabase, type BlogPost } from "@/lib/supabase";
 
 function checkAuth(req: NextRequest): boolean {
   const auth = req.headers.get("x-admin-password");
@@ -8,71 +8,49 @@ function checkAuth(req: NextRequest): boolean {
 
 export async function GET(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  try {
-    const posts = await getPosts();
-    return NextResponse.json(posts);
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
+  const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 export async function POST(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  try {
-    const body = await req.json();
-    const posts = await getPosts();
+  const body = await req.json();
+  const newPost: BlogPost = {
+    id: body.title
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣\s]/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 60) + "-" + Date.now().toString(36),
+    title: body.title,
+    date: new Date().toISOString().split("T")[0],
+    tags: body.tags || [],
+    summary: body.summary || "",
+    content: body.content || "",
+    published: body.published ?? true,
+  };
 
-    const newPost: BlogPost = {
-      id: body.title
-        .toLowerCase()
-        .replace(/[^a-z0-9가-힣\s]/g, "")
-        .replace(/\s+/g, "-")
-        .slice(0, 60) + "-" + Date.now().toString(36),
-      title: body.title,
-      date: new Date().toISOString().split("T")[0],
-      tags: body.tags || [],
-      summary: body.summary || "",
-      content: body.content || "",
-      published: body.published ?? true,
-    };
-
-    posts.unshift(newPost);
-    await savePosts(posts);
-    return NextResponse.json(newPost, { status: 201 });
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
+  const { data, error } = await supabase.from("posts").insert(newPost).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }
 
 export async function PUT(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  try {
-    const body = await req.json();
-    const posts = await getPosts();
-    const index = posts.findIndex((p) => p.id === body.id);
-
-    if (index === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-    posts[index] = { ...posts[index], ...body };
-    await savePosts(posts);
-    return NextResponse.json(posts[index]);
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
+  const body = await req.json();
+  const { id, ...updates } = body;
+  const { data, error } = await supabase.from("posts").update(updates).eq("id", id).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 export async function DELETE(req: NextRequest) {
   if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  try {
-    const { id } = await req.json();
-    let posts = await getPosts();
-    posts = posts.filter((p) => p.id !== id);
-    await savePosts(posts);
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
-  }
+  const { id } = await req.json();
+  const { error } = await supabase.from("posts").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
 }

@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { getPosts } from "@/lib/blob-store";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const posts = await getPosts();
-  const published = posts.filter((p) => p.published);
-  return NextResponse.json(published);
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("published", true)
+    .order("date", { ascending: false });
+
+  if (error) return NextResponse.json([], { status: 200 });
+  return NextResponse.json(data);
 }
