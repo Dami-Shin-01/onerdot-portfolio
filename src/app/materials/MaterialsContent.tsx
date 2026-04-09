@@ -26,6 +26,7 @@ const typeIcons: Record<string, string> = {
   pptx: "📊",
   ppt: "📊",
   image: "🖼️",
+  site: "🌐",
   video: "🎬",
   pdf: "📄",
 };
@@ -36,6 +37,7 @@ const typeLabels: Record<string, string> = {
   image: "이미지",
   video: "영상",
   pdf: "PDF",
+  site: "사이트",
 };
 
 export default function MaterialsContent() {

@@ -541,6 +541,7 @@ export default function AdminDashboard() {
                                 <option value="video">영상</option>
                                 <option value="image">이미지</option>
                                 <option value="pdf">PDF</option>
+                                <option value="site">사이트</option>
                               </select>
                               <input
                                 type="text"
