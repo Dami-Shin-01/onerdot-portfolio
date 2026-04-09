@@ -1,4 +1,4 @@
-import { put, list, del, head } from "@vercel/blob";
+import { put, list, del } from "@vercel/blob";
 
 export interface BlogPost {
   id: string;
@@ -32,32 +32,26 @@ export interface MaterialsData {
 const POSTS_KEY = "admin/posts.json";
 const MATERIALS_KEY = "admin/materials.json";
 
-async function findBlobUrl(prefix: string): Promise<string | null> {
+async function findBlob(prefix: string): Promise<{ url: string; downloadUrl: string } | null> {
   const { blobs } = await list({ prefix });
   if (blobs.length === 0) return null;
-  // For private blobs, get a downloadUrl
-  const blob = await head(blobs[0].url);
-  return blob.downloadUrl;
-}
-
-async function findBlobRawUrl(prefix: string): Promise<string | null> {
-  const { blobs } = await list({ prefix });
-  return blobs.length > 0 ? blobs[0].url : null;
+  return { url: blobs[0].url, downloadUrl: blobs[0].downloadUrl };
 }
 
 async function readJson<T>(prefix: string, fallback: T): Promise<T> {
-  const downloadUrl = await findBlobUrl(prefix);
-  if (!downloadUrl) return fallback;
-  const res = await fetch(downloadUrl, { cache: "no-store" });
+  const blob = await findBlob(prefix);
+  if (!blob) return fallback;
+  // Try downloadUrl first (for private blobs), fallback to url
+  const res = await fetch(blob.downloadUrl, { cache: "no-store" });
   if (!res.ok) return fallback;
   return res.json();
 }
 
 async function writeJson<T>(prefix: string, data: T): Promise<void> {
   // Delete existing blob first
-  const existing = await findBlobRawUrl(prefix);
+  const existing = await findBlob(prefix);
   if (existing) {
-    try { await del(existing); } catch { /* ignore */ }
+    try { await del(existing.url); } catch { /* ignore */ }
   }
   await put(prefix, JSON.stringify(data, null, 2), {
     access: "private",
