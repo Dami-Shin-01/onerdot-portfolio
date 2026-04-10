@@ -12,5 +12,6 @@ export async function GET() {
     materials: (materials || []).filter((m) => m.course_id === c.id),
   }));
 
-  return NextResponse.json({ password: "onadot2026", courses: result });
+  const password = process.env.MATERIALS_PASSWORD || "onadot2026";
+  return NextResponse.json({ password, courses: result });
 }
