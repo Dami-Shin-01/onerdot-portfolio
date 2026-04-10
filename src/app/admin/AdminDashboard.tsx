@@ -13,10 +13,13 @@ interface BlogPost {
 }
 
 interface MaterialItem {
+  id: number;
+  course_id: string;
   title: string;
   type: string;
   url: string;
   date: string;
+  sort_order: number;
 }
 
 interface MaterialCourse {
@@ -26,10 +29,24 @@ interface MaterialCourse {
   materials: MaterialItem[];
 }
 
-interface MaterialsData {
-  password: string;
-  courses: MaterialCourse[];
+interface CourseDraft {
+  title: string;
+  description: string;
 }
+
+interface MaterialDraft {
+  title: string;
+  type: string;
+  url: string;
+  date: string;
+}
+
+const EMPTY_MATERIAL_DRAFT: MaterialDraft = {
+  title: "",
+  type: "pptx",
+  url: "",
+  date: new Date().toISOString().split("T")[0],
+};
 
 export default function AdminDashboard() {
   const [password, setPassword] = useState("");
@@ -43,18 +60,30 @@ export default function AdminDashboard() {
   const [isNewPost, setIsNewPost] = useState(false);
 
   // Materials state
-  const [materials, setMaterials] = useState<MaterialsData>({ password: "", courses: [] });
-  const [editingCourse, setEditingCourse] = useState<MaterialCourse | null>(null);
-  const [isNewCourse, setIsNewCourse] = useState(false);
+  const [courses, setCourses] = useState<MaterialCourse[]>([]);
+  const [addingCourse, setAddingCourse] = useState(false);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [courseDraft, setCourseDraft] = useState<CourseDraft>({ title: "", description: "" });
+  const [addingMaterialTo, setAddingMaterialTo] = useState<string | null>(null);
+  const [editingMaterialId, setEditingMaterialId] = useState<number | null>(null);
+  const [materialDraft, setMaterialDraft] = useState<MaterialDraft>(EMPTY_MATERIAL_DRAFT);
+  const [busy, setBusy] = useState(false);
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<{ text: string; kind: "ok" | "err" } | null>(null);
 
   const headers = { "Content-Type": "application/json", "x-admin-password": password };
 
-  const showMessage = (msg: string) => {
-    setMessage(msg);
-    setTimeout(() => setMessage(""), 3000);
+  const showMessage = (text: string, kind: "ok" | "err" = "ok") => {
+    setMessage({ text, kind });
+    setTimeout(() => setMessage(null), 3500);
+  };
+
+  const resetEditStates = () => {
+    setAddingCourse(false);
+    setEditingCourseId(null);
+    setAddingMaterialTo(null);
+    setEditingMaterialId(null);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -79,7 +108,12 @@ export default function AdminDashboard() {
 
   const loadMaterials = useCallback(async () => {
     const res = await fetch("/api/admin/materials", { headers });
-    if (res.ok) setMaterials(await res.json());
+    if (res.ok) {
+      const data = await res.json();
+      setCourses(data.courses || []);
+    } else {
+      showMessage("자료 목록을 불러오지 못했습니다.", "err");
+    }
   }, [password]);
 
   useEffect(() => {
@@ -119,89 +153,189 @@ export default function AdminDashboard() {
     await loadPosts();
   };
 
-  // ─── Materials CRUD ───
-  const saveMaterials = async (data: MaterialsData) => {
-    setSaving(true);
-    const res = await fetch("/api/admin/materials", {
-      method: "PUT",
+  // ─── Materials CRUD (행 단위) ───
+  async function errorText(res: Response): Promise<string> {
+    try {
+      const j = await res.json();
+      return typeof j?.error === "string" ? j.error : `HTTP ${res.status}`;
+    } catch {
+      return `HTTP ${res.status}`;
+    }
+  }
+
+  const startAddCourse = () => {
+    resetEditStates();
+    setCourseDraft({ title: "", description: "" });
+    setAddingCourse(true);
+  };
+
+  const confirmAddCourse = async () => {
+    if (!courseDraft.title.trim()) {
+      showMessage("과정 제목을 입력해주세요.", "err");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch("/api/admin/courses", {
+      method: "POST",
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify(courseDraft),
     });
+    setBusy(false);
     if (res.ok) {
-      showMessage("저장되었습니다.");
-      setMaterials(data);
-    }
-    setSaving(false);
-  };
-
-  const addMaterialToCourse = (courseId: string) => {
-    const updated = {
-      ...materials,
-      courses: materials.courses.map((c) =>
-        c.id === courseId
-          ? {
-              ...c,
-              materials: [
-                ...c.materials,
-                { title: "", type: "pptx", url: "", date: new Date().toISOString().split("T")[0] },
-              ],
-            }
-          : c
-      ),
-    };
-    setMaterials(updated);
-  };
-
-  const removeMaterial = (courseId: string, index: number) => {
-    const updated = {
-      ...materials,
-      courses: materials.courses.map((c) =>
-        c.id === courseId
-          ? { ...c, materials: c.materials.filter((_, i) => i !== index) }
-          : c
-      ),
-    };
-    setMaterials(updated);
-  };
-
-  const updateMaterial = (courseId: string, index: number, field: string, value: string) => {
-    const updated = {
-      ...materials,
-      courses: materials.courses.map((c) =>
-        c.id === courseId
-          ? {
-              ...c,
-              materials: c.materials.map((m, i) =>
-                i === index ? { ...m, [field]: value } : m
-              ),
-            }
-          : c
-      ),
-    };
-    setMaterials(updated);
-  };
-
-  const saveCourse = () => {
-    if (!editingCourse) return;
-    let updated: MaterialsData;
-    if (isNewCourse) {
-      updated = { ...materials, courses: [...materials.courses, editingCourse] };
+      const created: MaterialCourse = await res.json();
+      setCourses((prev) => [...prev, created]);
+      setAddingCourse(false);
+      showMessage("과정이 추가되었습니다.");
     } else {
-      updated = {
-        ...materials,
-        courses: materials.courses.map((c) => (c.id === editingCourse.id ? editingCourse : c)),
-      };
+      showMessage("추가 실패: " + (await errorText(res)), "err");
     }
-    setMaterials(updated);
-    saveMaterials(updated);
-    setEditingCourse(null);
-    setIsNewCourse(false);
   };
 
-  const deleteCourse = (id: string) => {
-    if (!confirm("이 강의와 하위 자료가 모두 삭제됩니다. 계속하시겠습니까?")) return;
-    const updated = { ...materials, courses: materials.courses.filter((c) => c.id !== id) };
-    saveMaterials(updated);
+  const startEditCourse = (course: MaterialCourse) => {
+    resetEditStates();
+    setCourseDraft({ title: course.title, description: course.description });
+    setEditingCourseId(course.id);
+  };
+
+  const confirmEditCourse = async (id: string) => {
+    if (!courseDraft.title.trim()) {
+      showMessage("과정 제목을 비울 수 없습니다.", "err");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch(`/api/admin/courses/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(courseDraft),
+    });
+    setBusy(false);
+    if (res.ok) {
+      const updated = await res.json();
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === id ? { ...c, title: updated.title, description: updated.description } : c
+        )
+      );
+      setEditingCourseId(null);
+      showMessage("과정이 수정되었습니다.");
+    } else {
+      showMessage("수정 실패: " + (await errorText(res)), "err");
+    }
+  };
+
+  const deleteCourse = async (course: MaterialCourse) => {
+    const count = course.materials.length;
+    const msg =
+      count > 0
+        ? `"${course.title}" 과정과 하위 자료 ${count}개가 모두 삭제됩니다. 계속하시겠습니까?`
+        : `"${course.title}" 과정을 삭제하시겠습니까?`;
+    if (!confirm(msg)) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/courses/${encodeURIComponent(course.id)}`, {
+      method: "DELETE",
+      headers,
+    });
+    setBusy(false);
+    if (res.ok) {
+      setCourses((prev) => prev.filter((c) => c.id !== course.id));
+      showMessage("과정이 삭제되었습니다.");
+    } else {
+      showMessage("삭제 실패: " + (await errorText(res)), "err");
+    }
+  };
+
+  const startAddMaterial = (courseId: string) => {
+    resetEditStates();
+    setMaterialDraft({ ...EMPTY_MATERIAL_DRAFT });
+    setAddingMaterialTo(courseId);
+  };
+
+  const confirmAddMaterial = async (courseId: string) => {
+    if (!materialDraft.title.trim() || !materialDraft.url.trim()) {
+      showMessage("자료 제목과 URL을 모두 입력해주세요.", "err");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch(
+      `/api/admin/courses/${encodeURIComponent(courseId)}/materials`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(materialDraft),
+      }
+    );
+    setBusy(false);
+    if (res.ok) {
+      const created: MaterialItem = await res.json();
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, materials: [...c.materials, created] } : c
+        )
+      );
+      setAddingMaterialTo(null);
+      showMessage("자료가 추가되었습니다.");
+    } else {
+      showMessage("추가 실패: " + (await errorText(res)), "err");
+    }
+  };
+
+  const startEditMaterial = (m: MaterialItem) => {
+    resetEditStates();
+    setMaterialDraft({ title: m.title, type: m.type, url: m.url, date: m.date });
+    setEditingMaterialId(m.id);
+  };
+
+  const confirmEditMaterial = async (materialId: number, courseId: string) => {
+    if (!materialDraft.title.trim() || !materialDraft.url.trim()) {
+      showMessage("자료 제목과 URL을 비울 수 없습니다.", "err");
+      return;
+    }
+    setBusy(true);
+    const res = await fetch(`/api/admin/materials/${materialId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(materialDraft),
+    });
+    setBusy(false);
+    if (res.ok) {
+      const updated: MaterialItem = await res.json();
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === courseId
+            ? {
+                ...c,
+                materials: c.materials.map((m) => (m.id === materialId ? updated : m)),
+              }
+            : c
+        )
+      );
+      setEditingMaterialId(null);
+      showMessage("자료가 수정되었습니다.");
+    } else {
+      showMessage("수정 실패: " + (await errorText(res)), "err");
+    }
+  };
+
+  const deleteMaterial = async (m: MaterialItem) => {
+    if (!confirm(`"${m.title}" 자료를 삭제하시겠습니까?`)) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/materials/${m.id}`, {
+      method: "DELETE",
+      headers,
+    });
+    setBusy(false);
+    if (res.ok) {
+      setCourses((prev) =>
+        prev.map((c) =>
+          c.id === m.course_id
+            ? { ...c, materials: c.materials.filter((x) => x.id !== m.id) }
+            : c
+        )
+      );
+      showMessage("자료가 삭제되었습니다.");
+    } else {
+      showMessage("삭제 실패: " + (await errorText(res)), "err");
+    }
   };
 
   // ─── Login Screen ───
@@ -246,8 +380,12 @@ export default function AdminDashboard() {
 
       {/* Message Toast */}
       {message && (
-        <div className="fixed top-4 right-4 z-50 rounded bg-[#2C2C2C] px-5 py-3 text-sm text-white shadow-lg">
-          {message}
+        <div
+          className={`fixed top-4 right-4 z-50 rounded px-5 py-3 text-sm text-white shadow-lg ${
+            message.kind === "err" ? "bg-red-600" : "bg-[#2C2C2C]"
+          }`}
+        >
+          {message.text}
         </div>
       )}
 
@@ -423,175 +561,281 @@ export default function AdminDashboard() {
         {/* ═══ Materials Tab ═══ */}
         {activeTab === "materials" && (
           <div>
-            {editingCourse ? (
-              /* ── Course Editor ── */
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-[#2C2C2C]">
-                    {isNewCourse ? "새 강의 추가" : "강의 수정"}
-                  </h2>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-[#2C2C2C]">강의 목록 ({courses.length})</h2>
+              {!addingCourse && (
+                <button
+                  onClick={startAddCourse}
+                  className="rounded bg-[#C17A5A] px-5 py-2.5 text-sm text-white transition-opacity hover:opacity-90"
+                >
+                  + 새 과정
+                </button>
+              )}
+            </div>
+
+            {/* 새 과정 추가 폼 */}
+            {addingCourse && (
+              <div className="mb-6 rounded border border-[#C17A5A]/40 bg-white p-5">
+                <h3 className="mb-3 text-sm font-bold text-[#C17A5A]">새 과정 추가</h3>
+                <input
+                  type="text"
+                  value={courseDraft.title}
+                  onChange={(e) => setCourseDraft({ ...courseDraft, title: e.target.value })}
+                  placeholder="과정명"
+                  className="mb-3 w-full border-b border-[#807872]/30 bg-transparent py-2 text-base font-medium outline-none focus:border-[#C17A5A]"
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  value={courseDraft.description}
+                  onChange={(e) => setCourseDraft({ ...courseDraft, description: e.target.value })}
+                  placeholder="과정 설명 (한 줄)"
+                  className="mb-4 w-full border-b border-[#807872]/30 bg-transparent py-2 text-sm outline-none focus:border-[#C17A5A]"
+                />
+                <div className="flex gap-2">
                   <button
-                    onClick={() => { setEditingCourse(null); setIsNewCourse(false); }}
-                    className="text-sm text-[#807872] hover:text-[#2C2C2C]"
+                    onClick={confirmAddCourse}
+                    disabled={busy}
+                    className="rounded bg-[#C17A5A] px-5 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                  >
+                    {busy ? "추가 중..." : "추가"}
+                  </button>
+                  <button
+                    onClick={() => setAddingCourse(false)}
+                    disabled={busy}
+                    className="rounded border border-[#807872]/30 px-5 py-2 text-sm text-[#807872] hover:text-[#2C2C2C] disabled:opacity-50"
                   >
                     취소
                   </button>
                 </div>
-
-                <input
-                  type="text"
-                  value={editingCourse.title}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                  placeholder="강의명"
-                  className="w-full border-b border-[#807872]/30 bg-transparent py-3 text-lg font-bold outline-none focus:border-[#C17A5A]"
-                />
-
-                <input
-                  type="text"
-                  value={editingCourse.description}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
-                  placeholder="강의 설명 (한 줄)"
-                  className="w-full border-b border-[#807872]/30 bg-transparent py-2 text-sm outline-none focus:border-[#C17A5A]"
-                />
-
-                <button
-                  onClick={saveCourse}
-                  disabled={!editingCourse.title}
-                  className="rounded bg-[#C17A5A] px-8 py-3 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-                >
-                  저장
-                </button>
               </div>
+            )}
+
+            {courses.length === 0 && !addingCourse ? (
+              <p className="py-12 text-center text-sm text-[#807872]">등록된 과정이 없습니다.</p>
             ) : (
-              /* ── Course List + Materials ── */
-              <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-[#2C2C2C]">강의 목록</h2>
-                  <button
-                    onClick={() => {
-                      setEditingCourse({
-                        id: "course-" + Date.now().toString(36),
-                        title: "",
-                        description: "",
-                        materials: [],
-                      });
-                      setIsNewCourse(true);
-                    }}
-                    className="rounded bg-[#C17A5A] px-5 py-2.5 text-sm text-white transition-opacity hover:opacity-90"
-                  >
-                    + 새 강의
-                  </button>
-                </div>
-
-                {/* Materials Password */}
-                <div className="mb-8 flex items-center gap-3 rounded border border-[#807872]/20 bg-white p-4">
-                  <span className="text-xs text-[#807872]">자료실 비밀번호:</span>
-                  <input
-                    type="text"
-                    value={materials.password}
-                    onChange={(e) => setMaterials({ ...materials, password: e.target.value })}
-                    className="flex-1 border-b border-[#807872]/20 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
-                  />
-                  <button
-                    onClick={() => saveMaterials(materials)}
-                    className="text-xs text-[#C17A5A] hover:underline"
-                  >
-                    변경
-                  </button>
-                </div>
-
-                {materials.courses.length === 0 ? (
-                  <p className="py-12 text-center text-sm text-[#807872]">등록된 강의가 없습니다.</p>
-                ) : (
-                  <div className="space-y-8">
-                    {materials.courses.map((course) => (
-                      <div key={course.id} className="rounded border border-[#807872]/15 bg-white">
-                        {/* Course Header */}
-                        <div className="flex items-center justify-between border-b border-[#807872]/10 px-5 py-4">
+              <div className="space-y-6">
+                {courses.map((course) => {
+                  const isEditingThis = editingCourseId === course.id;
+                  return (
+                    <div key={course.id} className="rounded border border-[#807872]/15 bg-white">
+                      {/* Course Header */}
+                      <div className="border-b border-[#807872]/10 px-5 py-4">
+                        {isEditingThis ? (
                           <div>
-                            <h3 className="text-base font-bold text-[#2C2C2C]">{course.title}</h3>
-                            <p className="mt-0.5 text-xs text-[#807872]">{course.description}</p>
-                          </div>
-                          <div className="flex gap-3">
-                            <button
-                              onClick={() => { setEditingCourse(course); setIsNewCourse(false); }}
-                              className="text-xs text-[#807872] hover:text-[#C17A5A]"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={() => deleteCourse(course.id)}
-                              className="text-xs text-[#807872] hover:text-red-500"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Materials List */}
-                        <div className="px-5 py-3">
-                          {course.materials.map((m, i) => (
-                            <div key={i} className="flex items-center gap-3 border-b border-[#807872]/10 py-3 last:border-0">
-                              <select
-                                value={m.type}
-                                onChange={(e) => updateMaterial(course.id, i, "type", e.target.value)}
-                                className="w-20 rounded border border-[#807872]/20 bg-transparent px-2 py-1.5 text-xs outline-none"
-                              >
-                                <option value="pptx">PPT</option>
-                                <option value="video">영상</option>
-                                <option value="image">이미지</option>
-                                <option value="pdf">PDF</option>
-                                <option value="site">사이트</option>
-                              </select>
-                              <input
-                                type="text"
-                                value={m.title}
-                                onChange={(e) => updateMaterial(course.id, i, "title", e.target.value)}
-                                placeholder="자료 제목"
-                                className="flex-1 border-b border-[#807872]/15 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
-                              />
-                              <input
-                                type="text"
-                                value={m.url}
-                                onChange={(e) => updateMaterial(course.id, i, "url", e.target.value)}
-                                placeholder="URL (구글드라이브 등)"
-                                className="flex-1 border-b border-[#807872]/15 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
-                              />
-                              <input
-                                type="date"
-                                value={m.date}
-                                onChange={(e) => updateMaterial(course.id, i, "date", e.target.value)}
-                                className="w-36 border-b border-[#807872]/15 bg-transparent py-1 text-xs outline-none focus:border-[#C17A5A]"
-                              />
+                            <input
+                              type="text"
+                              value={courseDraft.title}
+                              onChange={(e) => setCourseDraft({ ...courseDraft, title: e.target.value })}
+                              placeholder="과정명"
+                              className="mb-2 w-full border-b border-[#807872]/30 bg-transparent py-2 text-base font-bold outline-none focus:border-[#C17A5A]"
+                              autoFocus
+                            />
+                            <input
+                              type="text"
+                              value={courseDraft.description}
+                              onChange={(e) => setCourseDraft({ ...courseDraft, description: e.target.value })}
+                              placeholder="과정 설명"
+                              className="mb-3 w-full border-b border-[#807872]/20 bg-transparent py-1.5 text-xs outline-none focus:border-[#C17A5A]"
+                            />
+                            <div className="flex gap-2">
                               <button
-                                onClick={() => removeMaterial(course.id, i)}
-                                className="text-xs text-[#807872] hover:text-red-500"
+                                onClick={() => confirmEditCourse(course.id)}
+                                disabled={busy}
+                                className="rounded bg-[#C17A5A] px-4 py-1.5 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                               >
-                                X
+                                {busy ? "저장 중..." : "저장"}
+                              </button>
+                              <button
+                                onClick={() => setEditingCourseId(null)}
+                                disabled={busy}
+                                className="rounded border border-[#807872]/30 px-4 py-1.5 text-xs text-[#807872] hover:text-[#2C2C2C] disabled:opacity-50"
+                              >
+                                취소
                               </button>
                             </div>
-                          ))}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-base font-bold text-[#2C2C2C]">{course.title}</h3>
+                              {course.description && (
+                                <p className="mt-0.5 text-xs text-[#807872]">{course.description}</p>
+                              )}
+                            </div>
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => startEditCourse(course)}
+                                className="text-xs text-[#807872] hover:text-[#C17A5A]"
+                              >
+                                수정
+                              </button>
+                              <button
+                                onClick={() => deleteCourse(course)}
+                                className="text-xs text-[#807872] hover:text-red-500"
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                          <div className="flex gap-3 pt-3">
+                      {/* Materials List */}
+                      <div className="px-5 py-3">
+                        {course.materials.length === 0 && addingMaterialTo !== course.id && (
+                          <p className="py-3 text-xs text-[#807872]">자료가 없습니다.</p>
+                        )}
+                        {course.materials.map((m) => {
+                          const isEditingMat = editingMaterialId === m.id;
+                          if (isEditingMat) {
+                            return (
+                              <div
+                                key={m.id}
+                                className="flex items-center gap-3 border-b border-[#807872]/10 py-3 last:border-0"
+                              >
+                                <select
+                                  value={materialDraft.type}
+                                  onChange={(e) => setMaterialDraft({ ...materialDraft, type: e.target.value })}
+                                  className="w-20 rounded border border-[#807872]/20 bg-transparent px-2 py-1.5 text-xs outline-none"
+                                >
+                                  <option value="pptx">PPT</option>
+                                  <option value="video">영상</option>
+                                  <option value="image">이미지</option>
+                                  <option value="pdf">PDF</option>
+                                  <option value="site">사이트</option>
+                                </select>
+                                <input
+                                  type="text"
+                                  value={materialDraft.title}
+                                  onChange={(e) => setMaterialDraft({ ...materialDraft, title: e.target.value })}
+                                  placeholder="자료 제목"
+                                  className="flex-1 border-b border-[#807872]/15 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
+                                  autoFocus
+                                />
+                                <input
+                                  type="text"
+                                  value={materialDraft.url}
+                                  onChange={(e) => setMaterialDraft({ ...materialDraft, url: e.target.value })}
+                                  placeholder="URL"
+                                  className="flex-1 border-b border-[#807872]/15 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
+                                />
+                                <input
+                                  type="date"
+                                  value={materialDraft.date}
+                                  onChange={(e) => setMaterialDraft({ ...materialDraft, date: e.target.value })}
+                                  className="w-36 border-b border-[#807872]/15 bg-transparent py-1 text-xs outline-none focus:border-[#C17A5A]"
+                                />
+                                <button
+                                  onClick={() => confirmEditMaterial(m.id, course.id)}
+                                  disabled={busy}
+                                  className="rounded bg-[#C17A5A] px-3 py-1 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                                >
+                                  {busy ? "..." : "저장"}
+                                </button>
+                                <button
+                                  onClick={() => setEditingMaterialId(null)}
+                                  disabled={busy}
+                                  className="rounded border border-[#807872]/30 px-3 py-1 text-xs text-[#807872] hover:text-[#2C2C2C] disabled:opacity-50"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div
+                              key={m.id}
+                              className="flex items-center gap-3 border-b border-[#807872]/10 py-3 last:border-0"
+                            >
+                              <span className="w-20 rounded bg-[#807872]/10 px-2 py-1 text-center text-xs text-[#807872]">
+                                {m.type}
+                              </span>
+                              <span className="flex-1 text-sm text-[#2C2C2C]">{m.title}</span>
+                              <span className="flex-1 truncate text-xs text-[#807872]">{m.url}</span>
+                              <span className="w-36 text-xs text-[#807872]">{m.date}</span>
+                              <button
+                                onClick={() => startEditMaterial(m)}
+                                className="text-xs text-[#807872] hover:text-[#C17A5A]"
+                              >
+                                수정
+                              </button>
+                              <button
+                                onClick={() => deleteMaterial(m)}
+                                className="text-xs text-[#807872] hover:text-red-500"
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          );
+                        })}
+
+                        {/* 새 자료 추가 폼 */}
+                        {addingMaterialTo === course.id && (
+                          <div className="flex items-center gap-3 border-t border-[#C17A5A]/40 bg-[#C17A5A]/5 py-3">
+                            <select
+                              value={materialDraft.type}
+                              onChange={(e) => setMaterialDraft({ ...materialDraft, type: e.target.value })}
+                              className="w-20 rounded border border-[#807872]/20 bg-white px-2 py-1.5 text-xs outline-none"
+                            >
+                              <option value="pptx">PPT</option>
+                              <option value="video">영상</option>
+                              <option value="image">이미지</option>
+                              <option value="pdf">PDF</option>
+                              <option value="site">사이트</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={materialDraft.title}
+                              onChange={(e) => setMaterialDraft({ ...materialDraft, title: e.target.value })}
+                              placeholder="자료 제목"
+                              className="flex-1 border-b border-[#807872]/20 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
+                              autoFocus
+                            />
+                            <input
+                              type="text"
+                              value={materialDraft.url}
+                              onChange={(e) => setMaterialDraft({ ...materialDraft, url: e.target.value })}
+                              placeholder="URL (구글드라이브 등)"
+                              className="flex-1 border-b border-[#807872]/20 bg-transparent py-1 text-sm outline-none focus:border-[#C17A5A]"
+                            />
+                            <input
+                              type="date"
+                              value={materialDraft.date}
+                              onChange={(e) => setMaterialDraft({ ...materialDraft, date: e.target.value })}
+                              className="w-36 border-b border-[#807872]/20 bg-transparent py-1 text-xs outline-none focus:border-[#C17A5A]"
+                            />
                             <button
-                              onClick={() => addMaterialToCourse(course.id)}
+                              onClick={() => confirmAddMaterial(course.id)}
+                              disabled={busy}
+                              className="rounded bg-[#C17A5A] px-3 py-1 text-xs text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                            >
+                              {busy ? "..." : "추가"}
+                            </button>
+                            <button
+                              onClick={() => setAddingMaterialTo(null)}
+                              disabled={busy}
+                              className="rounded border border-[#807872]/30 px-3 py-1 text-xs text-[#807872] hover:text-[#2C2C2C] disabled:opacity-50"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        )}
+
+                        {addingMaterialTo !== course.id && editingMaterialId === null && !isEditingThis && (
+                          <div className="pt-3">
+                            <button
+                              onClick={() => startAddMaterial(course.id)}
                               className="text-xs text-[#C17A5A] hover:underline"
                             >
                               + 자료 추가
                             </button>
-                            <button
-                              onClick={() => saveMaterials(materials)}
-                              disabled={saving}
-                              className="text-xs text-[#807872] hover:text-[#C17A5A]"
-                            >
-                              {saving ? "저장 중..." : "변경사항 저장"}
-                            </button>
                           </div>
-                        </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

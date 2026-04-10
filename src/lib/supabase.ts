@@ -23,7 +23,7 @@ export interface Course {
 }
 
 export interface Material {
-  id?: number;
+  id: number;
   course_id: string;
   title: string;
   type: string;
